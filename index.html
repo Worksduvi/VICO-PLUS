@@ -3,303 +3,535 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>PWA Chat — Cloud / Ollama</title>
-  <link rel="manifest" href="/manifest.json" />
+  <title>VICO+ — Chat Agentico para PWA</title>
+  <link rel="manifest" href="/VICO-PLUS/manifest.json" />
   <meta name="theme-color" content="#1a73e8" />
   <style>
-    :root{--bg:#0f1724;--card:#0b1220;--accent:#1a73e8;--muted:#9aa4b2;--text:#e6eef6}
+    :root{--bg:#0f1724;--card:#0b1220;--accent:#1a73e8;--muted:#9aa4b2;--text:#e6eef6;--success:#4caf50;--error:#f44336}
     *{box-sizing:border-box;font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
     html,body,#app{height:100%;margin:0;background:linear-gradient(180deg,#071024 0%,var(--bg) 100%);color:var(--text)}
-    .container{max-width:820px;margin:20px auto;padding:14px}
-    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:12px;box-shadow:0 6px 24px rgba(2,6,23,.6)}
-    header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-    header h1{font-size:18px;margin:0}
-    .settings{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-    .field{flex:1;min-width:160px;display:flex;flex-direction:column}
-    label{font-size:12px;color:var(--muted);margin-bottom:6px}
-    input,textarea,select,button{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:10px;border-radius:8px;color:var(--text);outline:none}
-    button{background:var(--accent);color:white;border:none;cursor:pointer}
-    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06)}
-    .chat{height:56vh;overflow:auto;padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));margin-bottom:12px}
-    .msg{margin-bottom:10px;display:flex;gap:10px}
-    .msg.user{justify-content:flex-end}
-    .bubble{max-width:76%;padding:10px 12px;border-radius:10px;background:#081227;color:var(--text);line-height:1.4;white-space:pre-wrap;word-break:break-word}
+    body{display:flex}
+    #sidebar{width:260px;background:rgba(11,18,32,0.8);border-right:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;overflow-y:auto}
+    #mainArea{flex:1;display:flex;flex-direction:column}
+    .sidebar-header{padding:12px;border-bottom:1px solid rgba(255,255,255,0.06)}
+    .sidebar-header h2{margin:0;font-size:16px}
+    .chat-list{flex:1;overflow-y:auto;padding:8px}
+    .chat-item{padding:10px;margin:4px 0;border-radius:8px;cursor:pointer;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);font-size:13px;truncate;transition:all 0.2s}
+    .chat-item:hover{background:rgba(26,115,232,0.15)}
+    .chat-item.active{background:var(--accent);color:white;border-color:var(--accent)}
+    .new-chat-btn{margin:8px;padding:10px;background:var(--accent);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:bold}
+    .settings-panel{padding:12px;border-top:1px solid rgba(255,255,255,0.06);font-size:12px}
+    .config-group{margin:8px 0}
+    .config-group label{display:block;color:var(--muted);margin-bottom:4px}
+    .config-group input,.config-group select{width:100%;padding:6px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.06);border-radius:4px;color:var(--text);font-size:11px}
+    #chatContainer{flex:1;display:flex;flex-direction:column}
+    .chat-header{padding:12px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:center}
+    .chat-header h3{margin:0;font-size:14px}
+    #chatMessages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+    .message{display:flex;gap:8px;animation:slideIn 0.3s ease}
+    @keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .message.user{justify-content:flex-end}
+    .bubble{max-width:70%;padding:10px 12px;border-radius:10px;line-height:1.4;word-break:break-word;font-size:14px}
+    .bubble.bot{background:#081227;color:var(--text)}
     .bubble.user{background:linear-gradient(90deg,var(--accent),#0f9cff);color:white}
-    .footer{display:flex;gap:8px;align-items:center}
-    .status{font-size:12px;color:var(--muted);margin-left:auto}
-    .install-btn{background:#fff;color:#0b1220;padding:8px;border-radius:8px;border:none;cursor:pointer}
-    .small{font-size:13px;color:var(--muted)}
-    .hint{font-size:13px;color:var(--muted);margin-top:8px}
-    .cmdBox{display:flex;gap:8px;align-items:center;margin-top:8px}
-    @media (max-width:600px){.container{margin:8px}}
+    .file-badge{display:inline-block;background:rgba(255,255,255,0.1);padding:4px 8px;border-radius:4px;font-size:11px;margin:2px 2px 2px 0;cursor:pointer}
+    .file-badge:hover{background:rgba(76,175,80,0.3)}
+    .input-area{padding:12px;border-top:1px solid rgba(255,255,255,0.06);display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+    .input-wrapper{flex:1;min-width:200px;display:flex;flex-direction:column;gap:4px}
+    .input-wrapper textarea{width:100%;padding:10px;background:transparent;border:1px solid rgba(255,255,255,0.06);border-radius:8px;color:var(--text);resize:none;height:40px;max-height:100px;font-family:inherit}
+    .input-wrapper textarea:focus{outline:none;border-color:var(--accent)}
+    .btn-group{display:flex;gap:6px}
+    button{background:var(--accent);color:white;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:13px;transition:all 0.2s}
+    button:hover{opacity:0.9}
+    button:disabled{opacity:0.5;cursor:not-allowed}
+    .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text)}
+    .btn-ghost:hover{background:rgba(255,255,255,0.05)}
+    .file-input-label{padding:8px 12px;background:transparent;border:1px solid rgba(255,255,255,0.06);border-radius:8px;cursor:pointer;font-size:13px;color:var(--text);display:flex;align-items:center;gap:4px}
+    .file-input-label:hover{background:rgba(255,255,255,0.05)}
+    #fileInput{display:none}
+    .status-bar{padding:8px 12px;background:rgba(255,255,255,0.02);border-top:1px solid rgba(255,255,255,0.06);font-size:12px;color:var(--muted);display:flex;justify-content:space-between}
+    .loading{display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .error{color:var(--error)}
+    .success{color:var(--success)}
+    @media (max-width:768px){
+      #sidebar{width:0;position:absolute;height:100%;z-index:100;transition:width 0.3s}
+      #sidebar.open{width:260px}
+      #mainArea{margin-left:0}
+    }
+    code{background:rgba(255,255,255,0.05);padding:2px 4px;border-radius:3px;font-size:12px}
+    pre{background:rgba(0,0,0,0.3);padding:8px;border-radius:6px;overflow-x:auto;font-size:12px}
   </style>
 </head>
 <body>
-  <div id="app" class="container">
-    <div class="card">
-      <header>
-        <img src="/icon.png" alt="icon" width="40" height="40" style="border-radius:8px"/>
-        <h1>PWA Chat — Conectar modelo en la nube</h1>
-        <button id="installBtn" class="install-btn" style="margin-left:auto;display:none">Instalar</button>
-      </header>
-
-      <section class="settings" aria-label="Configuración">
-        <div class="field" style="flex-basis:65%">
-          <label for="endpoint">Endpoint API o comando (ej. https://mi-ollama.example o "ollama run gemma4:31b-cloud")</label>
-          <input id="endpoint" placeholder="https://..." />
-        </div>
-        <div class="field" style="flex-basis:30%">
-          <label for="apikey">API Key (opcional)</label>
-          <input id="apikey" placeholder="Bearer token" />
-        </div>
-
-        <div style="display:flex;gap:8px;align-items:end;width:100%;margin-top:8px">
-          <button id="saveBtn" class="btn">Guardar & Probar</button>
-          <button id="clearBtn" class="btn ghost">Borrar credenciales</button>
-          <div class="status" id="connStatus">No probado</div>
-        </div>
-
-        <div id="cmdHelp" class="hint" style="display:none">
-          Has pegado un comando tipo <code>ollama run ...</code>. No se puede ejecutar desde el navegador. Opciones:
-          <div class="cmdBox">
-            <button id="copyCmd" class="btn">Copiar comando recomendado</button>
-            <button id="showInstructions" class="btn ghost">Ver instrucciones</button>
-          </div>
-        </div>
-      </section>
-
-      <section class="chat" id="chat" aria-live="polite"></section>
-
-      <div class="footer">
-        <input id="userInput" placeholder="Escribe un mensaje..." style="flex:1;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.06)" />
-        <button id="sendBtn" class="btn">Enviar</button>
-        <div class="small" style="margin-left:8px">Streaming: <span id="streamStatus">off</span></div>
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div class="sidebar-header">
+      <h2>VICO+</h2>
+    </div>
+    <button class="new-chat-btn" id="newChatBtn">+ Chat Nuevo</button>
+    <div class="chat-list" id="chatList"></div>
+    <div class="settings-panel">
+      <div class="config-group">
+        <label>Endpoint API</label>
+        <input id="endpoint" placeholder="https://api.openai.com" />
       </div>
+      <div class="config-group">
+        <label>API Key</label>
+        <input id="apiKey" type="password" placeholder="sk-..." />
+      </div>
+      <div class="config-group">
+        <label>Modelo</label>
+        <input id="model" placeholder="gpt-4, claude-3, llama2..." />
+      </div>
+      <div class="config-group">
+        <button id="saveConfigBtn" style="width:100%;font-size:12px">Guardar Config</button>
+      </div>
+      <div id="connStatus" style="margin-top:8px;font-size:11px;padding:6px;border-radius:4px;background:rgba(255,255,255,0.05)">Sin probar</div>
+    </div>
+  </div>
 
-      <p class="small" style="margin-top:10px">Nota: las credenciales se guardan localmente en IndexedDB. Si usas un servidor local asegúrate de CORS y del esquema HTTP/HTTPS correcto.</p>
+  <!-- MAIN AREA -->
+  <div id="mainArea">
+    <div class="chat-header">
+      <h3 id="chatTitle">Chat Agentico VICO+</h3>
+      <button class="btn-ghost" id="installBtn" style="display:none">Instalar PWA</button>
+    </div>
+
+    <div id="chatContainer">
+      <div id="chatMessages"></div>
+    </div>
+
+    <div class="input-area">
+      <div class="input-wrapper">
+        <textarea id="userInput" placeholder="Escribe tu prompt aquí... (Shift+Enter para nueva línea)" spellcheck="false"></textarea>
+        <div style="display:flex;gap:4px;font-size:11px;color:var(--muted)">
+          <span id="fileCount">0 archivos</span>
+        </div>
+      </div>
+      <div class="btn-group">
+        <label class="file-input-label">
+          📎
+          <input id="fileInput" type="file" multiple />
+        </label>
+        <button id="sendBtn" title="Enviar (Enter)">Enviar</button>
+      </div>
+    </div>
+
+    <div class="status-bar">
+      <span id="status">Listo</span>
+      <span>
+        <span id="streaming" style="display:none">
+          <span class="loading"></span> Streaming...
+        </span>
+      </span>
     </div>
   </div>
 
   <script>
-  /* ---------- IndexedDB ---------- */
-  const DB_NAME = 'pwa-chat-db', STORE = 'config';
-  function openDb(){ return new Promise((res,rej)=>{ const rq=indexedDB.open(DB_NAME,1); rq.onupgradeneeded=e=>{ const db=e.target.result; if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE); }; rq.onsuccess=e=>res(e.target.result); rq.onerror=e=>rej(e); }); }
-  async function dbPut(k,v){ const db=await openDb(); return new Promise((res,rej)=>{ const tx=db.transaction(STORE,'readwrite'); tx.objectStore(STORE).put(v,k); tx.oncomplete=()=>res(); tx.onerror=e=>rej(e); }); }
-  async function dbGet(k){ const db=await openDb(); return new Promise((res,rej)=>{ const tx=db.transaction(STORE,'readonly'); const rq=tx.objectStore(STORE).get(k); rq.onsuccess=e=>res(e.target.result); rq.onerror=e=>rej(e); }); }
-  async function dbDelete(k){ const db=await openDb(); return new Promise((res,rej)=>{ const tx=db.transaction(STORE,'readwrite'); tx.objectStore(STORE).delete(k); tx.oncomplete=()=>res(); tx.onerror=e=>rej(e); }); }
+  /* ========== CONSTANTS ========== */
+  const DB_NAME = 'vico-chat-db';
+  const CHATS_STORE = 'chats';
+  const CONFIG_STORE = 'config';
+  let currentChatId = null;
+  let uploadedFiles = [];
 
-  /* ---------- UI refs ---------- */
-  const endpointEl = document.getElementById('endpoint');
-  const apikeyEl = document.getElementById('apikey');
-  const saveBtn = document.getElementById('saveBtn');
-  const clearBtn = document.getElementById('clearBtn');
-  const connStatus = document.getElementById('connStatus');
-  const chatEl = document.getElementById('chat');
+  /* ========== IndexedDB ========== */
+  function openDb(version = 2) {
+    return new Promise((res, rej) => {
+      const req = indexedDB.open(DB_NAME, version);
+      req.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(CHATS_STORE)) {
+          db.createObjectStore(CHATS_STORE, { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains(CONFIG_STORE)) {
+          db.createObjectStore(CONFIG_STORE);
+        }
+      };
+      req.onsuccess = () => res(req.result);
+      req.onerror = () => rej(req.error);
+    });
+  }
+
+  async function saveChat(chatData) {
+    const db = await openDb();
+    return new Promise((res, rej) => {
+      const tx = db.transaction(CHATS_STORE, 'readwrite');
+      const store = tx.objectStore(CHATS_STORE);
+      store.put(chatData);
+      tx.oncomplete = () => res();
+      tx.onerror = () => rej(tx.error);
+    });
+  }
+
+  async function getChat(id) {
+    const db = await openDb();
+    return new Promise((res, rej) => {
+      const tx = db.transaction(CHATS_STORE, 'readonly');
+      const req = tx.objectStore(CHATS_STORE).get(id);
+      req.onsuccess = () => res(req.result);
+      req.onerror = () => rej(req.error);
+    });
+  }
+
+  async function getAllChats() {
+    const db = await openDb();
+    return new Promise((res, rej) => {
+      const tx = db.transaction(CHATS_STORE, 'readonly');
+      const req = tx.objectStore(CHATS_STORE).getAll();
+      req.onsuccess = () => res(req.result.sort((a, b) => b.timestamp - a.timestamp));
+      req.onerror = () => rej(req.error);
+    });
+  }
+
+  async function deleteChat(id) {
+    const db = await openDb();
+    return new Promise((res, rej) => {
+      const tx = db.transaction(CHATS_STORE, 'readwrite');
+      tx.objectStore(CHATS_STORE).delete(id);
+      tx.oncomplete = () => res();
+      tx.onerror = () => rej(tx.error);
+    });
+  }
+
+  async function saveConfig(key, value) {
+    const db = await openDb();
+    return new Promise((res, rej) => {
+      const tx = db.transaction(CONFIG_STORE, 'readwrite');
+      tx.objectStore(CONFIG_STORE).put(value, key);
+      tx.oncomplete = () => res();
+      tx.onerror = () => rej(tx.error);
+    });
+  }
+
+  async function getConfig(key) {
+    const db = await openDb();
+    return new Promise((res, rej) => {
+      const tx = db.transaction(CONFIG_STORE, 'readonly');
+      const req = tx.objectStore(CONFIG_STORE).get(key);
+      req.onsuccess = () => res(req.result);
+      req.onerror = () => rej(req.error);
+    });
+  }
+
+  /* ========== UI ELEMENTS ========== */
+  const sidebar = document.getElementById('sidebar');
+  const chatList = document.getElementById('chatList');
+  const newChatBtn = document.getElementById('newChatBtn');
+  const chatMessages = document.getElementById('chatMessages');
   const userInput = document.getElementById('userInput');
   const sendBtn = document.getElementById('sendBtn');
-  const streamStatus = document.getElementById('streamStatus');
+  const fileInput = document.getElementById('fileInput');
+  const fileCount = document.getElementById('fileCount');
+  const endpointEl = document.getElementById('endpoint');
+  const apiKeyEl = document.getElementById('apiKey');
+  const modelEl = document.getElementById('model');
+  const saveConfigBtn = document.getElementById('saveConfigBtn');
+  const connStatus = document.getElementById('connStatus');
+  const status = document.getElementById('status');
+  const streaming = document.getElementById('streaming');
   const installBtn = document.getElementById('installBtn');
-  const cmdHelp = document.getElementById('cmdHelp');
-  const copyCmd = document.getElementById('copyCmd');
-  const showInstructions = document.getElementById('showInstructions');
+  const chatTitle = document.getElementById('chatTitle');
 
-  /* ---------- PWA install ---------- */
+  /* ========== PWA INSTALL ========== */
   let deferredPrompt = null;
-  window.addEventListener('beforeinstallprompt', (e)=>{ e.preventDefault(); deferredPrompt=e; installBtn.style.display='inline-block'; });
-  installBtn.addEventListener('click', async ()=>{ if(!deferredPrompt) return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; installBtn.style.display='none'; });
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = 'inline-block';
+  });
+  installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    installBtn.style.display = 'none';
+  });
 
-  /* ---------- Helpers ---------- */
-  function isOllamaCommand(s){
-    if(!s) return false;
-    return /^\s*ollama\s+run\s+[^\s]+/i.test(s);
-  }
-  function recommendedCommand(){
-    return 'ollama run gemma4:31b-cloud';
-  }
-  function normalizeUrlInput(input){
-    if(!input) throw new Error('URL vacía');
-    let v = input.trim();
-    // If it looks like a command, throw
-    if(isOllamaCommand(v)) throw new Error('Comando detectado');
-    if(!/^https?:\/\//i.test(v)) v = 'https://' + v;
-    const u = new URL(v);
-    // Build base origin + maybe path (no trailing slash)
-    let base = u.origin + (u.pathname && u.pathname !== '/' ? u.pathname.replace(/\/+$/,'') : '');
-    return base;
+  /* ========== CHAT MANAGEMENT ========== */
+  async function createNewChat() {
+    const chatId = 'chat_' + Date.now();
+    const newChat = {
+      id: chatId,
+      title: 'Chat ' + new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+      messages: [],
+      timestamp: Date.now()
+    };
+    await saveChat(newChat);
+    await loadChatList();
+    await openChat(chatId);
   }
 
-  /* ---------- Config load/save ---------- */
-  async function loadConfig(){
-    const ep = await dbGet('endpoint'); if(ep) endpointEl.value = ep;
-    const key = await dbGet('apikey'); if(key) apikeyEl.value = key;
+  async function openChat(chatId) {
+    currentChatId = chatId;
+    const chat = await getChat(chatId);
+    if (!chat) return;
+    
+    chatTitle.textContent = chat.title;
+    chatMessages.innerHTML = '';
+    uploadedFiles = [];
+    fileCount.textContent = '0 archivos';
+
+    chat.messages.forEach(msg => {
+      renderMessage(msg.text, msg.role, msg.files);
+    });
+
+    document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
+    document.querySelector(`[data-chat-id="${chatId}"]`)?.classList.add('active');
+
+    chatMessages.scrollTop = chatMessages.scrollHeight;
   }
-  async function saveConfig(){
-    const raw = endpointEl.value.trim();
-    if(!raw){ connStatus.textContent='Endpoint vacío'; return; }
-    // If user pasted an ollama command, show helper and save raw as "cmd" so user doesn't lose it
-    if(isOllamaCommand(raw)){
-      await dbPut('endpoint_raw', raw);
-      await dbPut('endpoint_cmd', raw);
-      cmdHelp.style.display = 'block';
-      connStatus.textContent = 'Comando detectado — copia y ejecuta en tu servidor';
+
+  async function loadChatList() {
+    const chats = await getAllChats();
+    chatList.innerHTML = '';
+    chats.forEach(chat => {
+      const div = document.createElement('div');
+      div.className = 'chat-item';
+      div.setAttribute('data-chat-id', chat.id);
+      div.textContent = chat.title;
+      div.addEventListener('click', () => openChat(chat.id));
+      
+      const deleteBtn = document.createElement('button');
+      deleteBtn.textContent = '×';
+      deleteBtn.style.cssText = 'position:absolute;right:8px;background:transparent;border:none;color:var(--error);cursor:pointer;font-size:18px;padding:0';
+      deleteBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        await deleteChat(chat.id);
+        await loadChatList();
+        if (currentChatId === chat.id) {
+          await createNewChat();
+        }
+      });
+      
+      div.style.position = 'relative';
+      div.appendChild(deleteBtn);
+      chatList.appendChild(div);
+    });
+  }
+
+  /* ========== MESSAGE RENDERING ========== */
+  function renderMessage(text, role, files = []) {
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `message ${role === 'user' ? 'user' : ''}`;
+
+    const bubble = document.createElement('div');
+    bubble.className = `bubble ${role === 'user' ? 'user' : 'bot'}`;
+    
+    let html = formatMessage(text);
+    
+    if (files && files.length > 0) {
+      html += '<div style="margin-top:8px">';
+      files.forEach(file => {
+        html += `<div class="file-badge" onclick="downloadFile('${file.name}', '${file.data}')" title="Click para descargar">📄 ${file.name}</div>`;
+      });
+      html += '</div>';
+    }
+
+    bubble.innerHTML = html;
+    msgDiv.appendChild(bubble);
+    chatMessages.appendChild(msgDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function formatMessage(text) {
+    text = escapeHtml(text);
+    // Code blocks
+    text = text.replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+    // Inline code
+    text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+    // Line breaks
+    text = text.replace(/\n/g, '<br>');
+    return text;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function downloadFile(name, data) {
+    const link = document.createElement('a');
+    link.href = data;
+    link.download = name;
+    link.click();
+  }
+
+  window.downloadFile = downloadFile;
+
+  /* ========== FILE HANDLING ========== */
+  fileInput.addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files);
+    for (const file of files) {
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        uploadedFiles.push({
+          name: file.name,
+          data: evt.target.result
+        });
+        fileCount.textContent = uploadedFiles.length + ' archivo' + (uploadedFiles.length > 1 ? 's' : '');
+      };
+      reader.readAsDataURL(file);
+    }
+    e.target.value = '';
+  });
+
+  /* ========== SEND MESSAGE ========== */
+  async function sendMessage() {
+    const text = userInput.value.trim();
+    if (!text) return;
+
+    const endpoint = await getConfig('endpoint');
+    const apiKey = await getConfig('apiKey');
+    const model = await getConfig('model');
+
+    if (!endpoint || !model) {
+      alert('Configura endpoint y modelo primero');
       return;
     }
-    try{
-      const normalized = normalizeUrlInput(raw);
-      await dbPut('endpoint', normalized);
-      await dbPut('apikey', apikeyEl.value.trim());
-      connStatus.textContent = 'Guardado. Probando...';
-      cmdHelp.style.display = 'none';
-      await testEndpoint(normalized, apikeyEl.value.trim());
-    }catch(e){
-      connStatus.textContent = 'Error: '+e.message;
-    }
-  }
-  async function clearConfig(){
-    await dbDelete('endpoint'); await dbDelete('apikey'); await dbDelete('endpoint_cmd'); await dbDelete('endpoint_raw');
-    endpointEl.value=''; apikeyEl.value=''; connStatus.textContent='Borrado'; cmdHelp.style.display='none';
-  }
 
-  /* ---------- Endpoint test ---------- */
-  async function testEndpoint(base, key){
-    try{
-      connStatus.textContent = 'Probando...';
-      // try /health
-      try{
-        const h = await fetchWithTimeout(base + '/health', { method:'GET', headers: key ? {'Authorization': key} : {}, mode:'cors' }, 6000);
-        if(h.ok){ connStatus.textContent='Conectado (health ok)'; return; }
-      }catch(err){ /* ignore, try chat */ }
+    // Add user message
+    renderMessage(text, 'user', uploadedFiles);
+    
+    const currentChat = await getChat(currentChatId);
+    currentChat.messages.push({
+      text,
+      role: 'user',
+      files: uploadedFiles
+    });
 
-      // try POST /v1/chat probe
-      const probeUrl = base.endsWith('/') ? base + 'v1/chat' : base + '/v1/chat';
-      const probe = await fetchWithTimeout(probeUrl, {
-        method:'POST',
-        headers: Object.assign({'Content-Type':'application/json'}, key ? {'Authorization': key} : {}),
-        body: JSON.stringify({ messages:[{ role:'system', content:'probe' },{ role:'user', content:'hello' }], model: 'default' }),
-        mode:'cors'
-      }, 8000);
-      if(probe.ok){ connStatus.textContent = 'Conectado (chat ok)'; } else { connStatus.textContent = 'Endpoint respondió '+probe.status; }
-    }catch(e){
-      connStatus.textContent = 'Error: ' + (e.message || e);
-    }
-  }
+    userInput.value = '';
+    uploadedFiles = [];
+    fileCount.textContent = '0 archivos';
 
-  function fetchWithTimeout(resource, options = {}, timeout = 8000){
-    const controller = new AbortController();
-    const id = setTimeout(()=>controller.abort(), timeout);
-    return fetch(resource, Object.assign({}, options, { signal: controller.signal })).finally(()=>clearTimeout(id));
-  }
+    // Send to API
+    streaming.style.display = 'inline';
+    status.textContent = 'Enviando...';
+    sendBtn.disabled = true;
 
-  /* ---------- Chat rendering ---------- */
-  function appendMessage(text, who='bot', partial=false){
-    const wrap = document.createElement('div'); wrap.className = 'msg ' + (who==='user' ? 'user' : '');
-    const bubble = document.createElement('div'); bubble.className = 'bubble ' + (who==='user' ? 'user' : '');
-    bubble.innerHTML = text;
-    if(partial) bubble.style.opacity = '0.85';
-    wrap.appendChild(bubble); chatEl.appendChild(wrap); chatEl.scrollTop = chatEl.scrollHeight;
-    return bubble;
-  }
-
-  /* ---------- Send message ---------- */
-  async function sendMessageToEndpoint(messages){
-    streamStatus.textContent = 'on';
-    try{
-      const ep = await dbGet('endpoint');
-      if(!ep) throw new Error('Endpoint no configurado. Pega una URL válida o ejecuta el comando en tu servidor.');
-      const key = await dbGet('apikey');
-      const url = ep.endsWith('/') ? ep + 'v1/chat' : ep + '/v1/chat';
-
-      const res = await fetch(url, {
-        method:'POST',
-        headers: Object.assign({'Content-Type':'application/json'}, key ? {'Authorization': key} : {}),
-        body: JSON.stringify({ messages, model: 'default' }),
-        cache:'no-store',
-        mode:'cors'
+    try {
+      const res = await fetch(endpoint + '/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(apiKey && { 'Authorization': `Bearer ${apiKey}` })
+        },
+        body: JSON.stringify({
+          model,
+          messages: currentChat.messages.map(m => ({ role: m.role, content: m.text })),
+          stream: true
+        })
       });
 
-      if(!res.ok){
-        const txt = await res.text().catch(()=>res.statusText);
-        throw new Error('HTTP '+res.status+': '+txt);
-      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      // streaming or final
-      const cType = res.headers.get('content-type') || '';
-      if(res.body && cType.includes('text/event-stream')){
-        const reader = res.body.getReader(); const dec = new TextDecoder();
-        let buf=''; const botBubble = appendMessage('','bot',true);
-        while(true){
-          const {done, value} = await reader.read();
-          if(done) break;
-          buf += dec.decode(value,{stream:true});
-          let parts = buf.split(/\r?\n\r?\n/);
-          buf = parts.pop();
-          for(const p of parts){
-            const line = p.replace(/^data:\s*/,'').trim();
-            if(!line) continue;
-            if(line === '[DONE]') { done = true; break; }
-            try{ const obj = JSON.parse(line); botBubble.innerHTML += escapeHtml(obj.delta?.content || obj.choices?.[0]?.delta?.content || line); }
-            catch{ botBubble.innerHTML += escapeHtml(line); }
-            chatEl.scrollTop = chatEl.scrollHeight;
+      let botReply = '';
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      const botMsgEl = renderMessage('', 'bot');
+      const bubble = botMsgEl.querySelector('.bubble');
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') break;
+            try {
+              const json = JSON.parse(data);
+              const delta = json.choices[0]?.delta?.content || '';
+              botReply += delta;
+              bubble.textContent = formatMessage(botReply);
+            } catch (e) {}
           }
         }
-        botBubble.style.opacity='1';
-      } else if(res.body){
-        const reader = res.body.getReader(); const dec = new TextDecoder();
-        let acc=''; const botBubble = appendMessage('','bot',true);
-        while(true){
-          const {done, value} = await reader.read();
-          if(done) break;
-          const chunk = dec.decode(value,{stream:true});
-          acc += chunk;
-          botBubble.innerHTML = escapeHtml(acc);
-          chatEl.scrollTop = chatEl.scrollHeight;
-        }
-        botBubble.style.opacity='1';
-      } else {
-        const json = await res.json();
-        const reply = (json.choices && json.choices[0]?.message?.content) || json.output || JSON.stringify(json);
-        appendMessage(escapeHtml(reply),'bot');
       }
 
-    }catch(e){
-      appendMessage('Error: '+escapeHtml(e.message||e),'bot');
-    } finally { streamStatus.textContent='off'; }
+      currentChat.messages.push({
+        text: botReply,
+        role: 'assistant',
+        files: []
+      });
+
+      status.textContent = 'Listo';
+    } catch (e) {
+      status.textContent = 'Error: ' + e.message;
+      currentChat.messages.push({
+        text: '❌ ' + e.message,
+        role: 'assistant',
+        files: []
+      });
+    } finally {
+      streaming.style.display = 'none';
+      sendBtn.disabled = false;
+      await saveChat(currentChat);
+    }
   }
 
-  /* ---------- Events ---------- */
-  saveBtn.addEventListener('click', saveConfig);
-  clearBtn.addEventListener('click', clearConfig);
-  sendBtn.addEventListener('click', async ()=>{
-    const text = userInput.value.trim(); if(!text) return;
-    appendMessage(escapeHtml(text),'user');
-    userInput.value='';
-    const messages = [{ role:'user', content: text }];
-    await sendMessageToEndpoint(messages);
-  });
-  userInput.addEventListener('keydown',(e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendBtn.click(); }});
+  /* ========== CONFIG MANAGEMENT ========== */
+  async function loadConfig() {
+    const endpoint = await getConfig('endpoint');
+    const apiKey = await getConfig('apiKey');
+    const model = await getConfig('model');
 
-  copyCmd.addEventListener('click', async ()=>{
-    const raw = await dbGet('endpoint_cmd') || recommendedCommand();
-    navigator.clipboard.writeText(raw).then(()=>{ connStatus.textContent = 'Comando copiado al portapapeles'; }).catch(()=>{ connStatus.textContent = 'Error copiando comando'; });
-  });
-
-  showInstructions.addEventListener('click', ()=>{ alert('Ejecuta en la máquina que hará de servidor (ejemplo):\n\n1) ollama run gemma4:31b-cloud --listen --port 11434 --host 0.0.0.0\n2) Asegúrate de que CORS está habilitado\n3) Pega la URL en esta PWA: http://tu-ip:11434'); });
-
-  /* ---------- Utils ---------- */
-  function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-  /* ---------- Init & SW ---------- */
-  loadConfig();
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('/sw.js').then(()=>console.log('SW registrado')).catch(()=>console.log('SW fallo'));
+    if (endpoint) endpointEl.value = endpoint;
+    if (apiKey) apiKeyEl.value = apiKey;
+    if (model) modelEl.value = model;
   }
 
-  // When user types a command into the input, show helper
-  endpointEl.addEventListener('input', ()=>{
-    const v = endpointEl.value || '';
-    if(isOllamaCommand(v)){ cmdHelp.style.display='block'; } else { cmdHelp.style.display='none'; }
+  saveConfigBtn.addEventListener('click', async () => {
+    const endpoint = endpointEl.value.trim();
+    const apiKey = apiKeyEl.value.trim();
+    const model = modelEl.value.trim();
+
+    if (!endpoint || !model) {
+      connStatus.textContent = '❌ Endpoint y modelo requeridos';
+      return;
+    }
+
+    await saveConfig('endpoint', endpoint);
+    await saveConfig('apiKey', apiKey);
+    await saveConfig('model', model);
+
+    connStatus.textContent = '✅ Configurado';
   });
 
+  /* ========== EVENTS ========== */
+  newChatBtn.addEventListener('click', createNewChat);
+
+  sendBtn.addEventListener('click', sendMessage);
+
+  userInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  /* ========== INIT ========== */
+  async function init() {
+    await loadConfig();
+    await loadChatList();
+    
+    const chats = await getAllChats();
+    if (chats.length === 0) {
+      await createNewChat();
+    } else {
+      await openChat(chats[0].id);
+    }
+
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/VICO-PLUS/sw.js').catch(() => {});
+    }
+  }
+
+  init();
   </script>
 </body>
 </html>
