@@ -3,99 +3,136 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>VICO+ — Chat Agentico para PWA</title>
+  <title>VICO+ — Chat Agentico IA Avanzado</title>
   <link rel="manifest" href="/VICO-PLUS/manifest.json" />
   <meta name="theme-color" content="#1a73e8" />
   <style>
-    :root{--bg:#0f1724;--card:#0b1220;--accent:#1a73e8;--muted:#9aa4b2;--text:#e6eef6;--success:#4caf50;--error:#f44336}
+    :root{--bg:#0f1724;--card:#0b1220;--accent:#1a73e8;--muted:#9aa4b2;--text:#e6eef6;--success:#4caf50;--error:#f44336;--warning:#ff9800}
     *{box-sizing:border-box;font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
     html,body,#app{height:100%;margin:0;background:linear-gradient(180deg,#071024 0%,var(--bg) 100%);color:var(--text)}
     body{display:flex}
-    #sidebar{width:260px;background:rgba(11,18,32,0.8);border-right:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;overflow-y:auto}
+    #sidebar{width:280px;background:rgba(11,18,32,0.95);border-right:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;overflow-y:auto;box-shadow:0 0 20px rgba(0,0,0,0.5)}
     #mainArea{flex:1;display:flex;flex-direction:column}
-    .sidebar-header{padding:12px;border-bottom:1px solid rgba(255,255,255,0.06)}
-    .sidebar-header h2{margin:0;font-size:16px}
+    .sidebar-header{padding:14px;border-bottom:1px solid rgba(255,255,255,0.06)}
+    .sidebar-header h2{margin:0;font-size:16px;background:linear-gradient(90deg,#1a73e8,#0f9cff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
     .chat-list{flex:1;overflow-y:auto;padding:8px}
-    .chat-item{padding:10px;margin:4px 0;border-radius:8px;cursor:pointer;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);font-size:13px;truncate;transition:all 0.2s}
+    .chat-item{padding:10px;margin:4px 0;border-radius:8px;cursor:pointer;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);font-size:13px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;transition:all 0.2s;position:relative}
     .chat-item:hover{background:rgba(26,115,232,0.15)}
     .chat-item.active{background:var(--accent);color:white;border-color:var(--accent)}
-    .new-chat-btn{margin:8px;padding:10px;background:var(--accent);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:bold}
-    .settings-panel{padding:12px;border-top:1px solid rgba(255,255,255,0.06);font-size:12px}
-    .config-group{margin:8px 0}
-    .config-group label{display:block;color:var(--muted);margin-bottom:4px}
-    .config-group input,.config-group select{width:100%;padding:6px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.06);border-radius:4px;color:var(--text);font-size:11px}
+    .new-chat-btn{margin:8px;padding:10px;background:linear-gradient(90deg,var(--accent),#0f9cff);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:bold;transition:all 0.3s}
+    .new-chat-btn:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(26,115,232,0.4)}
+    .settings-toggle{margin:8px;padding:8px;background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text);border-radius:8px;cursor:pointer;font-size:12px;transition:all 0.2s}
+    .settings-toggle:hover{background:rgba(255,255,255,0.05)}
+    .settings-panel{padding:12px;border-top:1px solid rgba(255,255,255,0.06);font-size:12px;max-height:400px;overflow-y:auto;display:none}
+    .settings-panel.open{display:block}
+    .config-group{margin:10px 0}
+    .config-group label{display:block;color:var(--muted);margin-bottom:4px;font-weight:500}
+    .config-group input,.config-group select,.config-group textarea{width:100%;padding:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.06);border-radius:4px;color:var(--text);font-size:11px;transition:all 0.2s}
+    .config-group input:focus,.config-group select:focus,.config-group textarea:focus{outline:none;border-color:var(--accent);background:rgba(26,115,232,0.1)}
+    .provider-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+    .provider-btn{padding:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.06);border-radius:6px;cursor:pointer;color:var(--text);font-size:11px;transition:all 0.2s;text-align:center}
+    .provider-btn:hover{background:rgba(255,255,255,0.1)}
+    .provider-btn.active{background:var(--accent);border-color:var(--accent);color:white}
     #chatContainer{flex:1;display:flex;flex-direction:column}
-    .chat-header{padding:12px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:center}
+    .chat-header{padding:14px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:center;background:rgba(26,115,232,0.05)}
     .chat-header h3{margin:0;font-size:14px}
-    #chatMessages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+    .header-controls{display:flex;gap:8px}
+    #chatMessages{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
     .message{display:flex;gap:8px;animation:slideIn 0.3s ease}
     @keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
     .message.user{justify-content:flex-end}
-    .bubble{max-width:70%;padding:10px 12px;border-radius:10px;line-height:1.4;word-break:break-word;font-size:14px}
-    .bubble.bot{background:#081227;color:var(--text)}
+    .bubble{max-width:70%;padding:12px 14px;border-radius:12px;line-height:1.5;word-break:break-word;font-size:14px}
+    .bubble.bot{background:#081227;border:1px solid rgba(26,115,232,0.2);color:var(--text)}
     .bubble.user{background:linear-gradient(90deg,var(--accent),#0f9cff);color:white}
-    .file-badge{display:inline-block;background:rgba(255,255,255,0.1);padding:4px 8px;border-radius:4px;font-size:11px;margin:2px 2px 2px 0;cursor:pointer}
+    .bubble.system{background:rgba(255,193,7,0.15);border-left:3px solid var(--warning);color:var(--text)}
+    .file-badge{display:inline-block;background:rgba(255,255,255,0.1);padding:6px 10px;border-radius:4px;font-size:11px;margin:4px 4px 4px 0;cursor:pointer;transition:all 0.2s}
     .file-badge:hover{background:rgba(76,175,80,0.3)}
-    .input-area{padding:12px;border-top:1px solid rgba(255,255,255,0.06);display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
-    .input-wrapper{flex:1;min-width:200px;display:flex;flex-direction:column;gap:4px}
-    .input-wrapper textarea{width:100%;padding:10px;background:transparent;border:1px solid rgba(255,255,255,0.06);border-radius:8px;color:var(--text);resize:none;height:40px;max-height:100px;font-family:inherit}
-    .input-wrapper textarea:focus{outline:none;border-color:var(--accent)}
+    .input-area{padding:14px;border-top:1px solid rgba(255,255,255,0.06);display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;background:rgba(11,18,32,0.5)}
+    .input-wrapper{flex:1;min-width:200px;display:flex;flex-direction:column;gap:6px}
+    .input-wrapper textarea{width:100%;padding:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.06);border-radius:8px;color:var(--text);resize:none;height:40px;max-height:100px;font-family:inherit;transition:all 0.2s}
+    .input-wrapper textarea:focus{outline:none;border-color:var(--accent);background:rgba(26,115,232,0.1)}
     .btn-group{display:flex;gap:6px}
-    button{background:var(--accent);color:white;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:13px;transition:all 0.2s}
-    button:hover{opacity:0.9}
-    button:disabled{opacity:0.5;cursor:not-allowed}
+    button{background:var(--accent);color:white;border:none;padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;transition:all 0.2s;font-weight:500}
+    button:hover{opacity:0.85;transform:translateY(-1px)}
+    button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
     .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--text)}
     .btn-ghost:hover{background:rgba(255,255,255,0.05)}
-    .file-input-label{padding:8px 12px;background:transparent;border:1px solid rgba(255,255,255,0.06);border-radius:8px;cursor:pointer;font-size:13px;color:var(--text);display:flex;align-items:center;gap:4px}
+    .file-input-label{padding:10px 12px;background:transparent;border:1px solid rgba(255,255,255,0.06);border-radius:8px;cursor:pointer;font-size:13px;color:var(--text);display:flex;align-items:center;justify-content:center;transition:all 0.2s}
     .file-input-label:hover{background:rgba(255,255,255,0.05)}
     #fileInput{display:none}
-    .status-bar{padding:8px 12px;background:rgba(255,255,255,0.02);border-top:1px solid rgba(255,255,255,0.06);font-size:12px;color:var(--muted);display:flex;justify-content:space-between}
+    .status-bar{padding:10px 14px;background:rgba(255,255,255,0.02);border-top:1px solid rgba(255,255,255,0.06);font-size:12px;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
     .loading{display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,0.2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
     .error{color:var(--error)}
     .success{color:var(--success)}
+    .warning{color:var(--warning)}
+    .modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center}
+    .modal.open{display:flex}
+    .modal-content{background:var(--bg);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:20px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto}
+    .modal-header{font-size:16px;font-weight:bold;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.06)}
+    .modal-close{position:absolute;top:12px;right:12px;background:transparent;border:none;color:var(--text);font-size:20px;cursor:pointer}
     @media (max-width:768px){
       #sidebar{width:0;position:absolute;height:100%;z-index:100;transition:width 0.3s}
-      #sidebar.open{width:260px}
+      #sidebar.open{width:280px}
       #mainArea{margin-left:0}
+      .bubble{max-width:90%}
     }
-    code{background:rgba(255,255,255,0.05);padding:2px 4px;border-radius:3px;font-size:12px}
-    pre{background:rgba(0,0,0,0.3);padding:8px;border-radius:6px;overflow-x:auto;font-size:12px}
+    code{background:rgba(255,255,255,0.05);padding:2px 6px;border-radius:3px;font-size:12px;font-family:monospace}
+    pre{background:rgba(0,0,0,0.5);padding:10px;border-radius:6px;overflow-x:auto;font-size:12px;border:1px solid rgba(255,255,255,0.06)}
+    .token-counter{font-size:11px;color:var(--muted);margin-top:4px}
   </style>
 </head>
 <body>
   <!-- SIDEBAR -->
   <div id="sidebar">
     <div class="sidebar-header">
-      <h2>VICO+</h2>
+      <h2>🚀 VICO+</h2>
     </div>
-    <button class="new-chat-btn" id="newChatBtn">+ Chat Nuevo</button>
+    <button class="new-chat-btn" id="newChatBtn">+ Nuevo Chat</button>
+    <button class="settings-toggle" id="settingsToggle">⚙️ Configuración</button>
     <div class="chat-list" id="chatList"></div>
-    <div class="settings-panel">
-      <div class="config-group">
-        <label>Endpoint API</label>
-        <input id="endpoint" placeholder="https://api.openai.com" />
+    
+    <div class="settings-panel" id="settingsPanel">
+      <div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.06)">
+        <label style="font-weight:bold;color:var(--accent)">Proveedor de IA</label>
+        <div class="provider-grid" style="margin-top:8px" id="providerGrid"></div>
       </div>
-      <div class="config-group">
-        <label>API Key</label>
-        <input id="apiKey" type="password" placeholder="sk-..." />
-      </div>
+
       <div class="config-group">
         <label>Modelo</label>
-        <input id="model" placeholder="gpt-4, claude-3, llama2..." />
+        <select id="model"></select>
       </div>
+
       <div class="config-group">
-        <button id="saveConfigBtn" style="width:100%;font-size:12px">Guardar Config</button>
+        <label>API Key</label>
+        <input id="apiKey" type="password" placeholder="Tu clave API..." />
       </div>
-      <div id="connStatus" style="margin-top:8px;font-size:11px;padding:6px;border-radius:4px;background:rgba(255,255,255,0.05)">Sin probar</div>
+
+      <div class="config-group">
+        <label>Endpoint (Opcional)</label>
+        <input id="endpoint" placeholder="https://api.ejemplo.com" />
+      </div>
+
+      <div class="config-group">
+        <button id="saveConfigBtn" style="width:100%;font-size:12px">✅ Guardar Configuración</button>
+      </div>
+
+      <div id="connStatus" style="margin-top:8px;font-size:11px;padding:8px;border-radius:4px;background:rgba(255,255,255,0.05);text-align:center">⏳ Sin probar</div>
+
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.06)">
+        <button id="advancedSettingsBtn" class="btn-ghost" style="width:100%;font-size:12px">⚡ Ajustes Avanzados</button>
+      </div>
     </div>
   </div>
 
   <!-- MAIN AREA -->
   <div id="mainArea">
     <div class="chat-header">
-      <h3 id="chatTitle">Chat Agentico VICO+</h3>
-      <button class="btn-ghost" id="installBtn" style="display:none">Instalar PWA</button>
+      <h3 id="chatTitle">💬 VICO+ Chat Agentico</h3>
+      <div class="header-controls">
+        <button class="btn-ghost" id="exportBtn" style="padding:6px 10px;font-size:12px">📥 Exportar</button>
+        <button class="btn-ghost" id="installBtn" style="display:none;padding:6px 10px;font-size:12px">📱 Instalar PWA</button>
+      </div>
     </div>
 
     <div id="chatContainer">
@@ -105,36 +142,158 @@
     <div class="input-area">
       <div class="input-wrapper">
         <textarea id="userInput" placeholder="Escribe tu prompt aquí... (Shift+Enter para nueva línea)" spellcheck="false"></textarea>
-        <div style="display:flex;gap:4px;font-size:11px;color:var(--muted)">
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted)">
           <span id="fileCount">0 archivos</span>
+          <span id="tokenCounter" class="token-counter"></span>
         </div>
       </div>
       <div class="btn-group">
-        <label class="file-input-label">
+        <label class="file-input-label" title="Subir archivos">
           📎
           <input id="fileInput" type="file" multiple />
         </label>
-        <button id="sendBtn" title="Enviar (Enter)">Enviar</button>
+        <button id="sendBtn" title="Enviar (Enter)">➤ Enviar</button>
       </div>
     </div>
 
     <div class="status-bar">
-      <span id="status">Listo</span>
+      <span id="status">✓ Listo</span>
       <span>
         <span id="streaming" style="display:none">
-          <span class="loading"></span> Streaming...
+          <span class="loading"></span> Procesando...
         </span>
       </span>
     </div>
   </div>
 
+  <!-- MODAL AJUSTES AVANZADOS -->
+  <div id="advancedModal" class="modal">
+    <div class="modal-content" style="position:relative">
+      <button class="modal-close" onclick="closeAdvancedSettings()">×</button>
+      <div class="modal-header">⚙️ 20 Ajustes Avanzados</div>
+      
+      <div id="advancedSettings" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <!-- Se generarán dinámicamente -->
+      </div>
+
+      <div style="margin-top:16px;display:flex;gap:8px">
+        <button id="saveAdvancedBtn" style="flex:1">Guardar Ajustes</button>
+        <button class="btn-ghost" onclick="closeAdvancedSettings()" style="flex:1">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
   <script>
+  /* ========== PROVIDERS DATABASE ========== */
+  const PROVIDERS = {
+    groq: {
+      name: 'Groq AI',
+      endpoint: 'https://api.groq.com/openai/v1',
+      icon: '⚡',
+      models: [
+        'mixtral-8x7b-32768',
+        'llama-2-70b-chat',
+        'gemma-7b-it',
+        'llama2-70b'
+      ]
+    },
+    gemini: {
+      name: 'Google Gemini',
+      endpoint: 'https://generativelanguage.googleapis.com/v1',
+      icon: '✨',
+      models: [
+        'gemini-2.0-flash',
+        'gemini-1.5-pro',
+        'gemini-1.5-flash',
+        'gemini-pro'
+      ]
+    },
+    openrouter: {
+      name: 'OpenRouter',
+      endpoint: 'https://openrouter.ai/api/v1',
+      icon: '🌐',
+      models: [
+        'openai/gpt-4-turbo',
+        'anthropic/claude-3-opus',
+        'meta-llama/llama-2-70b-chat',
+        'mistralai/mistral-7b'
+      ]
+    },
+    claude: {
+      name: 'Claude (Anthropic)',
+      endpoint: 'https://api.anthropic.com',
+      icon: '🧠',
+      models: [
+        'claude-3-5-sonnet-20241022',
+        'claude-3-opus-20240229',
+        'claude-3-sonnet-20240229',
+        'claude-3-haiku-20240307'
+      ]
+    },
+    nvidia: {
+      name: 'NVIDIA Build API',
+      endpoint: 'https://integrate.api.nvidia.com/v1',
+      icon: '🎮',
+      models: [
+        'nvidia/nemotron-4-340b-instruct',
+        'nvidia/llama-2-70b',
+        'nvidia/mixtral-8x22b-instruct'
+      ]
+    },
+    deepseek: {
+      name: 'DeepSeek',
+      endpoint: 'https://api.deepseek.com',
+      icon: '🔍',
+      models: [
+        'deepseek-chat',
+        'deepseek-coder',
+        'deepseek-vl'
+      ]
+    },
+    openai: {
+      name: 'OpenAI',
+      endpoint: 'https://api.openai.com/v1',
+      icon: '🔴',
+      models: [
+        'gpt-4-turbo',
+        'gpt-4',
+        'gpt-3.5-turbo',
+        'gpt-3.5-turbo-16k'
+      ]
+    }
+  };
+
+  /* ========== ADVANCED SETTINGS ========== */
+  const ADVANCED_SETTINGS = [
+    { key: 'temperature', label: 'Temperatura (0-2)', type: 'number', min: 0, max: 2, step: 0.1, default: 0.7 },
+    { key: 'top_p', label: 'Top P (0-1)', type: 'number', min: 0, max: 1, step: 0.05, default: 0.9 },
+    { key: 'top_k', label: 'Top K', type: 'number', min: 1, max: 100, step: 1, default: 40 },
+    { key: 'max_tokens', label: 'Máx Tokens', type: 'number', min: 1, max: 8000, step: 100, default: 2000 },
+    { key: 'presence_penalty', label: 'Penalidad de Presencia', type: 'number', min: -2, max: 2, step: 0.1, default: 0 },
+    { key: 'frequency_penalty', label: 'Penalidad de Frecuencia', type: 'number', min: -2, max: 2, step: 0.1, default: 0 },
+    { key: 'repetition_penalty', label: 'Penalidad de Repetición', type: 'number', min: 1, max: 2, step: 0.1, default: 1 },
+    { key: 'length_penalty', label: 'Penalidad de Longitud', type: 'number', min: 0.5, max: 2, step: 0.1, default: 1 },
+    { key: 'system_prompt', label: 'System Prompt', type: 'textarea', default: 'Eres un asistente de IA útil y competente.' },
+    { key: 'auto_save', label: 'Auto-guardar chats', type: 'checkbox', default: true },
+    { key: 'markdown_render', label: 'Renderizar Markdown', type: 'checkbox', default: true },
+    { key: 'show_tokens', label: 'Mostrar contador de tokens', type: 'checkbox', default: true },
+    { key: 'theme_mode', label: 'Modo tema', type: 'select', options: ['Oscuro', 'Claro', 'Auto'], default: 'Oscuro' },
+    { key: 'notification_sound', label: 'Sonido de notificación', type: 'checkbox', default: false },
+    { key: 'typing_indicator', label: 'Indicador de escritura', type: 'checkbox', default: true },
+    { key: 'auto_scroll', label: 'Auto-desplazamiento', type: 'checkbox', default: true },
+    { key: 'confirm_delete', label: 'Confirmar antes de borrar', type: 'checkbox', default: true },
+    { key: 'cache_responses', label: 'Cachear respuestas', type: 'checkbox', default: true },
+    { key: 'retry_attempts', label: 'Intentos de reintento', type: 'number', min: 1, max: 5, step: 1, default: 3 },
+    { key: 'timeout_ms', label: 'Timeout (ms)', type: 'number', min: 1000, max: 60000, step: 1000, default: 30000 }
+  ];
+
   /* ========== CONSTANTS ========== */
   const DB_NAME = 'vico-chat-db';
   const CHATS_STORE = 'chats';
   const CONFIG_STORE = 'config';
   let currentChatId = null;
   let uploadedFiles = [];
+  let currentProvider = null;
 
   /* ========== IndexedDB ========== */
   function openDb(version = 2) {
@@ -219,6 +378,8 @@
   const sidebar = document.getElementById('sidebar');
   const chatList = document.getElementById('chatList');
   const newChatBtn = document.getElementById('newChatBtn');
+  const settingsToggle = document.getElementById('settingsToggle');
+  const settingsPanel = document.getElementById('settingsPanel');
   const chatMessages = document.getElementById('chatMessages');
   const userInput = document.getElementById('userInput');
   const sendBtn = document.getElementById('sendBtn');
@@ -233,6 +394,102 @@
   const streaming = document.getElementById('streaming');
   const installBtn = document.getElementById('installBtn');
   const chatTitle = document.getElementById('chatTitle');
+  const advancedSettingsBtn = document.getElementById('advancedSettingsBtn');
+  const advancedModal = document.getElementById('advancedModal');
+  const exportBtn = document.getElementById('exportBtn');
+  const tokenCounter = document.getElementById('tokenCounter');
+  const providerGrid = document.getElementById('providerGrid');
+
+  /* ========== FUNCTION 1: DETECTAR PROVEEDORES ========== */
+  async function detectProviders() {
+    Object.entries(PROVIDERS).forEach(([key, provider]) => {
+      const btn = document.createElement('button');
+      btn.className = 'provider-btn';
+      btn.textContent = `${provider.icon} ${provider.name}`;
+      btn.setAttribute('data-provider', key);
+      btn.addEventListener('click', () => selectProvider(key));
+      providerGrid.appendChild(btn);
+    });
+  }
+
+  /* ========== FUNCTION 2: SELECCIONAR PROVEEDOR ========== */
+  async function selectProvider(providerKey) {
+    currentProvider = PROVIDERS[providerKey];
+    await saveConfig('provider', providerKey);
+    
+    // Actualizar botones
+    document.querySelectorAll('.provider-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    document.querySelector(`[data-provider="${providerKey}"]`)?.classList.add('active');
+
+    // Cargar modelos
+    modelEl.innerHTML = '';
+    currentProvider.models.forEach(model => {
+      const option = document.createElement('option');
+      option.value = model;
+      option.textContent = model;
+      modelEl.appendChild(option);
+    });
+
+    // Establecer endpoint por defecto
+    endpointEl.value = currentProvider.endpoint;
+    connStatus.textContent = `✅ ${currentProvider.name} seleccionado`;
+  }
+
+  /* ========== FUNCTION 3: CONTADOR DE TOKENS ========== */
+  function estimateTokens(text) {
+    // Aproximación simple: 1 token ≈ 4 caracteres
+    return Math.ceil(text.length / 4);
+  }
+
+  function updateTokenCount() {
+    const text = userInput.value;
+    const tokens = estimateTokens(text);
+    if (document.getElementById('show_tokens')?.checked !== false) {
+      tokenCounter.textContent = `${tokens} tokens`;
+    }
+  }
+
+  /* ========== FUNCTION 4: EXPORTAR CHAT ========== */
+  async function exportCurrentChat() {
+    if (!currentChatId) {
+      alert('No hay chat para exportar');
+      return;
+    }
+
+    const chat = await getChat(currentChatId);
+    const exportData = {
+      title: chat.title,
+      timestamp: new Date(chat.timestamp).toISOString(),
+      messages: chat.messages,
+      provider: currentProvider?.name || 'Desconocido',
+      model: modelEl.value
+    };
+
+    const jsonStr = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `chat-${chat.id}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  /* ========== FUNCTION 5: LIMPIAR CONTEXTO (NUEVA CONVERSACIÓN) ========== */
+  async function clearChatContext() {
+    if (!currentChatId) return;
+    
+    const confirmed = confirm('¿Limpiar el contexto de esta conversación pero mantener el chat?');
+    if (confirmed) {
+      const chat = await getChat(currentChatId);
+      chat.messages = [];
+      await saveChat(chat);
+      chatMessages.innerHTML = '';
+      status.textContent = '✓ Contexto limpiado';
+    }
+  }
 
   /* ========== PWA INSTALL ========== */
   let deferredPrompt = null;
@@ -254,7 +511,7 @@
     const chatId = 'chat_' + Date.now();
     const newChat = {
       id: chatId,
-      title: 'Chat ' + new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+      title: '💬 ' + new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
       messages: [],
       timestamp: Date.now()
     };
@@ -298,6 +555,9 @@
       deleteBtn.style.cssText = 'position:absolute;right:8px;background:transparent;border:none;color:var(--error);cursor:pointer;font-size:18px;padding:0';
       deleteBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
+        if (document.querySelector('[data-confirm_delete]')?.checked !== false) {
+          if (!confirm('¿Borrar este chat?')) return;
+        }
         await deleteChat(chat.id);
         await loadChatList();
         if (currentChatId === chat.id) {
@@ -381,16 +641,21 @@
     const text = userInput.value.trim();
     if (!text) return;
 
-    const endpoint = await getConfig('endpoint');
+    const provider = await getConfig('provider');
     const apiKey = await getConfig('apiKey');
-    const model = await getConfig('model');
+    const model = modelEl.value;
+    let endpoint = endpointEl.value;
 
-    if (!endpoint || !model) {
-      alert('Configura endpoint y modelo primero');
+    if (!provider || !model || !apiKey) {
+      alert('Configura proveedor, modelo y API Key');
       return;
     }
 
-    // Add user message
+    if (!endpoint) {
+      endpoint = PROVIDERS[provider]?.endpoint;
+    }
+
+    // Renderizar mensaje del usuario
     renderMessage(text, 'user', uploadedFiles);
     
     const currentChat = await getChat(currentChatId);
@@ -404,32 +669,49 @@
     uploadedFiles = [];
     fileCount.textContent = '0 archivos';
 
-    // Send to API
+    // Mostrar indicador de carga
     streaming.style.display = 'inline';
-    status.textContent = 'Enviando...';
+    status.textContent = '📤 Enviando...';
     sendBtn.disabled = true;
 
     try {
-      const res = await fetch(endpoint + '/v1/chat/completions', {
+      const systemPrompt = await getConfig('system_prompt') || 'Eres un asistente de IA útil y competente.';
+      const temperature = parseFloat(await getConfig('temperature') || 0.7);
+      const max_tokens = parseInt(await getConfig('max_tokens') || 2000);
+
+      const messages = [
+        { role: 'system', content: systemPrompt },
+        ...currentChat.messages.map(m => ({ role: m.role, content: m.text }))
+      ];
+
+      const res = await fetch(endpoint + '/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(apiKey && { 'Authorization': `Bearer ${apiKey}` })
+          'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
           model,
-          messages: currentChat.messages.map(m => ({ role: m.role, content: m.text })),
+          messages,
+          temperature,
+          max_tokens,
           stream: true
         })
       });
 
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
 
       let botReply = '';
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      const botMsgEl = renderMessage('', 'bot');
-      const bubble = botMsgEl.querySelector('.bubble');
+      
+      const botMsgDiv = document.createElement('div');
+      botMsgDiv.className = 'message';
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble bot';
+      bubble.textContent = '⏳ Procesando...';
+      botMsgDiv.appendChild(bubble);
+      chatMessages.appendChild(botMsgDiv);
 
       while (true) {
         const { done, value } = await reader.read();
@@ -446,7 +728,7 @@
               const json = JSON.parse(data);
               const delta = json.choices[0]?.delta?.content || '';
               botReply += delta;
-              bubble.textContent = formatMessage(botReply);
+              bubble.textContent = botReply || '...';
             } catch (e) {}
           }
         }
@@ -458,9 +740,10 @@
         files: []
       });
 
-      status.textContent = 'Listo';
+      status.textContent = '✅ Completado';
     } catch (e) {
-      status.textContent = 'Error: ' + e.message;
+      status.textContent = '❌ Error: ' + e.message;
+      renderMessage('❌ Error: ' + e.message, 'bot');
       currentChat.messages.push({
         text: '❌ ' + e.message,
         role: 'assistant',
@@ -469,41 +752,128 @@
     } finally {
       streaming.style.display = 'none';
       sendBtn.disabled = false;
-      await saveChat(currentChat);
+      if (await getConfig('auto_save') !== false) {
+        await saveChat(currentChat);
+      }
     }
   }
 
   /* ========== CONFIG MANAGEMENT ========== */
   async function loadConfig() {
-    const endpoint = await getConfig('endpoint');
+    const provider = await getConfig('provider');
     const apiKey = await getConfig('apiKey');
     const model = await getConfig('model');
 
-    if (endpoint) endpointEl.value = endpoint;
+    if (provider) {
+      await selectProvider(provider);
+      if (model) modelEl.value = model;
+    }
     if (apiKey) apiKeyEl.value = apiKey;
-    if (model) modelEl.value = model;
   }
 
   saveConfigBtn.addEventListener('click', async () => {
+    const provider = currentProvider ? Object.keys(PROVIDERS).find(k => PROVIDERS[k] === currentProvider) : null;
     const endpoint = endpointEl.value.trim();
     const apiKey = apiKeyEl.value.trim();
-    const model = modelEl.value.trim();
+    const model = modelEl.value;
 
-    if (!endpoint || !model) {
-      connStatus.textContent = '❌ Endpoint y modelo requeridos';
+    if (!provider || !model || !apiKey) {
+      connStatus.textContent = '❌ Todos los campos obligatorios';
       return;
     }
 
-    await saveConfig('endpoint', endpoint);
+    await saveConfig('provider', provider);
+    await saveConfig('endpoint', endpoint || PROVIDERS[provider].endpoint);
     await saveConfig('apiKey', apiKey);
     await saveConfig('model', model);
 
-    connStatus.textContent = '✅ Configurado';
+    connStatus.textContent = '✅ Configuración guardada';
   });
+
+  /* ========== ADVANCED SETTINGS ========== */
+  function initAdvancedSettings() {
+    const settingsContainer = document.getElementById('advancedSettings');
+    settingsContainer.innerHTML = '';
+
+    ADVANCED_SETTINGS.forEach(setting => {
+      const group = document.createElement('div');
+      group.className = 'config-group';
+
+      const label = document.createElement('label');
+      label.textContent = setting.label;
+      group.appendChild(label);
+
+      let input;
+      if (setting.type === 'checkbox') {
+        input = document.createElement('input');
+        input.type = 'checkbox';
+        input.id = setting.key;
+        input.checked = localStorage.getItem(setting.key) === 'true' || setting.default;
+      } else if (setting.type === 'select') {
+        input = document.createElement('select');
+        input.id = setting.key;
+        setting.options.forEach(opt => {
+          const option = document.createElement('option');
+          option.value = opt;
+          option.textContent = opt;
+          input.appendChild(option);
+        });
+        input.value = localStorage.getItem(setting.key) || setting.default;
+      } else if (setting.type === 'textarea') {
+        input = document.createElement('textarea');
+        input.id = setting.key;
+        input.value = localStorage.getItem(setting.key) || setting.default;
+        input.style.minHeight = '60px';
+      } else {
+        input = document.createElement('input');
+        input.type = setting.type;
+        input.id = setting.key;
+        if (setting.min) input.min = setting.min;
+        if (setting.max) input.max = setting.max;
+        if (setting.step) input.step = setting.step;
+        input.value = localStorage.getItem(setting.key) || setting.default;
+      }
+
+      group.appendChild(input);
+      settingsContainer.appendChild(group);
+    });
+  }
+
+  advancedSettingsBtn.addEventListener('click', () => {
+    initAdvancedSettings();
+    advancedModal.classList.add('open');
+  });
+
+  function closeAdvancedSettings() {
+    advancedModal.classList.remove('open');
+  }
+
+  document.getElementById('saveAdvancedBtn').addEventListener('click', async () => {
+    ADVANCED_SETTINGS.forEach(setting => {
+      const element = document.getElementById(setting.key);
+      if (element) {
+        const value = setting.type === 'checkbox' ? element.checked : element.value;
+        localStorage.setItem(setting.key, value);
+        await saveConfig(setting.key, value);
+      }
+    });
+    connStatus.textContent = '✅ Ajustes guardados';
+    closeAdvancedSettings();
+  });
+
+  /* ========== SETTINGS PANEL TOGGLE ========== */
+  settingsToggle.addEventListener('click', () => {
+    settingsPanel.classList.toggle('open');
+  });
+
+  /* ========== EXPORT BUTTON ========== */
+  exportBtn.addEventListener('click', exportCurrentChat);
+
+  /* ========== TOKEN COUNTER ========== */
+  userInput.addEventListener('input', updateTokenCount);
 
   /* ========== EVENTS ========== */
   newChatBtn.addEventListener('click', createNewChat);
-
   sendBtn.addEventListener('click', sendMessage);
 
   userInput.addEventListener('keydown', (e) => {
@@ -515,6 +885,7 @@
 
   /* ========== INIT ========== */
   async function init() {
+    await detectProviders();
     await loadConfig();
     await loadChatList();
     
@@ -532,6 +903,8 @@
   }
 
   init();
+
+  window.closeAdvancedSettings = closeAdvancedSettings;
   </script>
 </body>
 </html>
